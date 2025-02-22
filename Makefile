@@ -47,6 +47,20 @@ $(bin_folder)/testxml: $(obj_folder)/XMLReader.o $(obj_folder)/XMLWriter.o $(obj
 	@mkdir -p $(bin_folder)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+# ● Must link CSVBusSystem and CSVBusSystem tests object files to make testcsvbs
+# executable
+
+$(bin_folder)/testcsvbs: $(obj_folder)/CSVBusSystem.o $(obj_folder)/CSVBusSystemTest.o
+	@mkdir -p $(bin_folder)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# ● Must link OpenStreetMap and OpenStreetMap tests object files to make testosm
+# executable
+
+$(bin_folder)/testcsvbs: $(obj_folder)/OpenStreetMap.o $(obj_folder)/OpenStreetMapTest.o
+	@mkdir -p $(bin_folder)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
 
 $(obj_folder)/%.o: $(src_folder)/%.cpp
 	@mkdir -p $(obj_folder)
@@ -64,6 +78,8 @@ test: $(execute_target)
 			./$(bin_folder)/teststrdatasink --gtest_break_on_failure=0
 			./$(bin_folder)/testdsv --gtest_break_on_failure=0
 			./$(bin_folder)/testxml --gtest_break_on_failure=0
+			./$(bin_folder)/testcsvbs --gtest_break_on_failure=0
+			./$(bin_folder)/testosm --gtest_break_on_failure=0
 
 # ● Must provide a clean that will remove the obj and bin directories
 clean:
