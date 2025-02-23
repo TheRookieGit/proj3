@@ -7,7 +7,7 @@
 
 struct CCSVBusSystem::SImplementation{
 
-    struct SStop:CBusSystem::SStop{
+    struct new_SStop:CBusSystem::SStop{
 
 
         CBusSystem::TStopID ID() const noexcept override{
@@ -21,7 +21,7 @@ struct CCSVBusSystem::SImplementation{
 
     };
 
-    struct SRoute : CBusSystem::SRoute {
+    struct new_SRoute : CBusSystem::SRoute {
         std::string Name() const noexcept {
             return "";
         }
@@ -49,44 +49,44 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
 {
 }
 
-//Done
+//Done with null
 // Destructor for the CSV Bus System 
 CCSVBusSystem::~CCSVBusSystem() = default;
 
-//Done
+//Done with null
 // Returns the number of stops in the system 
 std::size_t CCSVBusSystem::StopCount() const noexcept {
     return 0;
 }
 
-//Done
+//Done with null
 // Returns the number of routes in the system 
 std::size_t CCSVBusSystem::RouteCount() const noexcept {
     return 0;
 }
 
-//Done
+//Done with null
 // Returns the SStop specified by the index, nullptr is returned if index is greater than equal to StopCount() 
 std::shared_ptr<CBusSystem::SStop> CCSVBusSystem::StopByIndex(std::size_t index) const noexcept {
     return nullptr;
 }
 
 
-//Done
+//Done with null
 // Returns the SStop specified by the stop id, nullptr is returned if id is not in the stops 
 std::shared_ptr<CBusSystem::SStop> CCSVBusSystem::StopByID(TStopID id) const noexcept {
     return nullptr;
 }
 
 
-//Done
+//Done with null
 // Returns the SRoute specified by the index, nullptr is returned if index is greater than equal to RouteCount() 
 std::shared_ptr<CBusSystem::SRoute> CCSVBusSystem::RouteByIndex(std::size_t index) const noexcept {
     return nullptr;
 }
 
 
-//Done
+//Done with null
 // Returns the SRoute specified by the name, nullptr is returned if name is not in the routes 
 std::shared_ptr<CBusSystem::SRoute> CCSVBusSystem::RouteByName(const std::string &name) const noexcept {
     return nullptr;
