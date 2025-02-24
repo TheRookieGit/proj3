@@ -60,7 +60,29 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
     // std::vector<ToSaveStop> all_stops;
     // std::vector<ToSaveRoute> all_routes;
 
-    DImplementation 
+    DImplementation = std::make_unique<SImplementation>();
+
+    //read stops
+
+    while(!stopsrc -> End()){
+        std::vector<std::string> reading_row;
+
+        if(stopsrc-> ReadRow(reading_row)){
+            if(reading_row.size() >=2){
+                auto current_stop= std::make_shared<SImplementation::ToSaveStop>();
+
+
+                current_stop->saved_stopid = row[0];
+                current_stop->saved_nodeid = row[1];
+
+                DImplementation->all_stops.push_back(stop);
+
+            }
+        }
+    }
+
+
+    //read routes
 
 
 }
