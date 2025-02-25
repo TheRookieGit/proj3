@@ -168,10 +168,17 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
                     auto current_stop= std::make_shared<CCSVBusSystem::SImplementation::ToSaveStop>();
 
 
-                    current_stop->saved_stopid = reading_row[0];
-                    current_stop->saved_nodeid = reading_row[1];
+                    // added after stoull ERROR
+                    try{
+
+                    current_stop->saved_stopid = std::stoull(reading_row[0]);
+                    current_stop->saved_nodeid = std::stoull(reading_row[1]);
 
                     DImplementation->all_stops.push_back(*current_stop);
+                    }
+                    catch(...){
+                        continue;
+                    }
 
                 }
             }
@@ -184,6 +191,10 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
         while(!routesrc->End()){
             std::vector<std::string> reading_row;
             
+            // added after stoull ERROR
+            if(!routesrc->ReadRow(reading_row) || reading_row.empty()){
+                continue;
+            }
 
             if(is_firstrow){
                 if(!isdigit(reading_row[0][0])){
@@ -191,11 +202,16 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
 
                     continue;
                 }
-
-
+                
+                is_firstrow = false;
             }
 
-            is_firstrow = false;
+            //is_firstrow = false;
+
+            // added after stoull ERROR
+            if(reading_row.empty()){
+                continue;
+            }
 
             std::string current_route_name = reading_row[0];
 
@@ -209,7 +225,9 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
                         //std::vector <std::string>& stop_list = DImplementation->all_routes[i].route_stopid;
                         std::vector <CBusSystem::TStopID>& stop_list = DImplementation->all_routes[i].route_stopid;
 
-                        std::string new_stopid = reading_row[j];
+                        //std::string new_stopid = reading_row[j];
+
+                        CBusSystem::TStopID new_stopid = std::stoull(reading_row[j]);
                         stop_list.push_back(new_stopid);
                     }
 
@@ -226,7 +244,9 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
                 create_newroute.route_name = current_route_name;
 
                 for (std::size_t j = 1; j< reading_row.size();j++){
-                    create_newroute.route_stopid.push_back(reading_row[j]);
+
+                    CBusSystem::TStopID new_stopid = std::stoull(reading_row[j]);
+                    create_newroute.route_stopid.push_back(new_stopid);
 
                 }
 
