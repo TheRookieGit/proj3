@@ -50,6 +50,7 @@ struct CCSVBusSystem::SImplementation{
     std::vector<ToSaveStop> all_stops;
     std::vector<ToSaveRoute> all_routes;
     
+    
 };
 
 
@@ -63,10 +64,10 @@ namespace SeparateRead_StopsRoutes{
                     auto current_stop= std::make_shared<CCSVBusSystem::SImplementation::ToSaveStop>();
 
 
-                    current_stop->saved_stopid = row[0];
-                    current_stop->saved_nodeid = row[1];
+                    current_stop->saved_stopid = reading_row[0];
+                    current_stop->saved_nodeid = reading_row[1];
 
-                    new_CSVBusSystem->DImplementation->all_stops.push_back(current_stop);
+                    new_CSVBusSystem->DImplementation->all_stops.push_back(*current_stop);
 
                 }
             }
@@ -93,8 +94,45 @@ namespace SeparateRead_StopsRoutes{
 
             is_firstrow = false;
 
+            std::string current_route_name = reading_row[0];
 
-            
+
+            bool sameroute_exist = false;
+
+            for(std::size_t i = 0; i < new_CSVBusSystem->DImplementation->all_routes.size(); i++){
+                if (new_CSVBusSystem->DImplementation->all_routes[i].route_name == current_route_name){
+
+                    for (std::size_t j = 1; j < reading_row.size(); j++){
+                        std::vector <std::string>& stop_list = new_CSVBusSystem->DImplementation->all_routes[i].route_stopid;
+
+
+                        std::string new_stopid = reading_row[j];
+                        stop_list.push_back(new_stopid);
+                    }
+
+                    sameroute_exist = true;
+
+                    break;
+                }
+            }
+
+
+            if(!sameroute_exist){
+                CCSVBusSystem::SImplementation::ToSaveRoute create_newroute;
+
+                create_newroute.route_name = current_route_name;
+
+                for (std::size_t j = 1; j< reading_row.size();j++){
+                    create_newroute.route_stopid.push_back(reading_row[j]);
+
+                }
+
+                new_CSVBusSystem->DImplementation->all_routes.push_back(create_newroute);
+            }
+
+
+
+
         }
 
     }
@@ -108,7 +146,7 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
     // std::vector<ToSaveStop> all_stops;
     // std::vector<ToSaveRoute> all_routes;
 
-    // DImplementation = std::make_unique<SImplementation>();
+    DImplementation = std::make_unique<SImplementation>();
 
     // //read stops
 
