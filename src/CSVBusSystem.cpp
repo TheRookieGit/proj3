@@ -52,6 +52,54 @@ struct CCSVBusSystem::SImplementation{
     
 };
 
+
+namespace SeparateRead_StopsRoutes{
+    void ReadStops(CCSVBusSystem* new_CSVBusSystem, std::shared_ptr<CDSVReader> stopsrc){
+        while(!stopsrc -> End()){
+            std::vector<std::string> reading_row;
+
+            if(stopsrc-> ReadRow(reading_row)){
+                if(reading_row.size() >=2){
+                    auto current_stop= std::make_shared<CCSVBusSystem::SImplementation::ToSaveStop>();
+
+
+                    current_stop->saved_stopid = row[0];
+                    current_stop->saved_nodeid = row[1];
+
+                    new_CSVBusSystem->DImplementation->all_stops.push_back(current_stop);
+
+                }
+            }
+        }
+    }
+
+
+    void ReadRoutes(CCSVBusSystem* new_CSVBusSystem, std::shared_ptr<CDSVReader> routesrc){
+        bool is_firstrow = true;
+
+        while (!routesrc->End()){
+            std::vector<std::string> reading_row;
+            
+
+            if(is_firstrow){
+                if(!isdigit(reading_row[0][0])){
+                    is_firstrow = false;
+
+                    continue;
+                }
+
+
+            }
+
+            is_firstrow = false;
+
+
+            
+        }
+
+    }
+}
+
 // CCSVBusSystem member functions 
 // Constructor for the CSV Bus System 
 CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_ptr<CDSVReader> routesrc)
@@ -60,26 +108,26 @@ CCSVBusSystem::CCSVBusSystem(std::shared_ptr<CDSVReader> stopsrc, std::shared_pt
     // std::vector<ToSaveStop> all_stops;
     // std::vector<ToSaveRoute> all_routes;
 
-    DImplementation = std::make_unique<SImplementation>();
+    // DImplementation = std::make_unique<SImplementation>();
 
-    //read stops
+    // //read stops
 
-    while(!stopsrc -> End()){
-        std::vector<std::string> reading_row;
+    // while(!stopsrc -> End()){
+    //     std::vector<std::string> reading_row;
 
-        if(stopsrc-> ReadRow(reading_row)){
-            if(reading_row.size() >=2){
-                auto current_stop= std::make_shared<SImplementation::ToSaveStop>();
+    //     if(stopsrc-> ReadRow(reading_row)){
+    //         if(reading_row.size() >=2){
+    //             auto current_stop= std::make_shared<SImplementation::ToSaveStop>();
 
 
-                current_stop->saved_stopid = row[0];
-                current_stop->saved_nodeid = row[1];
+    //             current_stop->saved_stopid = row[0];
+    //             current_stop->saved_nodeid = row[1];
 
-                DImplementation->all_stops.push_back(stop);
+    //             DImplementation->all_stops.push_back(stop);
 
-            }
-        }
-    }
+    //         }
+    //     }
+    // }
 
 
     //read routes
