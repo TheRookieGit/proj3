@@ -8,8 +8,9 @@ struct COpenStreetMap::SImplementation {
     struct new_SNode : COpenStreetMap::SNode {
         TNodeID DID;
         TLocation DLocation;
-        std::map<std::string, std::string> DAttributes; // Attribute storage
-
+        std::map<std::string, std::string> DAttributes; 
+        std::vector<std::shared_ptr<SWay>> DWays;              
+       
         // Constructor to initialize the node with an ID, location, and attributes
         new_SNode(TNodeID id, TLocation location, std::map<std::string, std::string> attributes)
             : DID(id), DLocation(location), DAttributes(std::move(attributes)) {}
@@ -97,7 +98,7 @@ std::size_t COpenStreetMap::WayCount() const noexcept {
 
 // returns the SNode associated with index returns nullptr if index is out of range
 std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
-    return (index < DImplementation->DNodes.size()) ? DImplementation->DNodes[index] : nullptr;
+    return (index < DImplementation->DNodeIDs.size()) ? DImplementation->DNodeIDs[index] : nullptr;
 }
 
 // returns the SNode with the given id returns nullptr if it doesn't exist 
