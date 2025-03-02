@@ -1,5 +1,6 @@
 #include "OpenStreetMap.h"
 #include "CXMLReader.h"
+#include "XMLEntity.h"
 #include <string>
 #include <iostream>
 #include <memory>
@@ -91,9 +92,28 @@ struct COpenStreetMap::SImplementation {
     std::map<TWayID, std::shared_ptr<new_SWay>> DWayMap;
 };
 
-COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src)
-    : DImplementation(std::make_unique<SImplementation>()) {
-    std::cout << "OpenStreetMap initialized." << std::endl;
+COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementation(std::make_unique<SImplementation>()) {
+    SXMLEntity entity;
+    while (src->ReadEntity(entity)) {
+        if (entity.DType == SXMLEntity::EType::StartElement) {
+            if (entity.DNameData == "node") {
+                TNodeID nodeID = std::stoll(entity.DAttributes["id"]);
+                TLocation location = {std::stod(entity.DAttributes["lat"]), std::stod(entity.DAttributes["lon"])};
+                DImplementation->DNodeMap[nodeID] = std::make_shared<new_SNode>(nodeID, location, entity.DAttributes);
+            } else if (entity.DNameData == "way") {
+                TWayID wayID = std::stoll(entity.DAttributes["id"]);
+                std::vector<TNodeID> nodes;
+                std::map<std::string, std::string> attributes;
+                while (src->ReadEntity(entity) && entity.DType != SXMLEntity::EType::EndElement) {
+                    if (entity.DNameData == "nd") {
+                        nodes.push_back(std::stoll(entity.DAttributes["ref"]));
+                    }
+                }
+                DImplementation->DWayMap[wayID] = std::make_shared<new_SWay>(wayID, nodes, attributes);
+                DImplementation->DWays.push_back(DImplementation->DWayMap[wayID]);
+            }
+        }
+    }
 }
 
 COpenStreetMap::~COpenStreetMap() = default;
@@ -128,81 +148,6 @@ std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const n
     return it != DImplementation->DWayMap.end() ? it->second : nullptr;
 }
 
-int main() {
-    // Load OpenStreetMap data using XML Reader
-    std::shared_ptr<CXMLReader> reader = std::make_shared<CXMLReader>("map.osm");
-    COpenStreetMap osm(reader);
-    
-    std::cout << "OpenStreetMap Data Loaded." << std::endl;
-    
-    // Display node and way count
-    std::cout << "Total Nodes: " << osm.NodeCount() << std::endl;
-    std::cout << "Total Ways: " << osm.WayCount() << std::endl;
-
-    // Example: Fetch and display all nodes
-    for (std::size_t i = 0; i < osm.NodeCount(); ++i) {
-        auto node = osm.NodeByIndex(i);
-        if (node) {
-            std::cout << "Node ID: " << node->ID() << " Location: (" 
-                      << node->Location().Latitude << ", " 
-                      << node->Location().Longitude << ")" << std::endl;
-        }
-    }
-
-    // Example: Fetch and display all ways
-    for (std::size_t i = 0; i < osm.WayCount(); ++i) {
-        auto way = osm.WayByIndex(i);
-        if (way) {
-            std::cout << "Way ID: " << way->ID() << " contains " 
-                      << way->NodeCount() << " nodes." << std::endl;
-        }
-    }
-
-    return 0;
-}
-
-
-
-// Constructor for the Open Street Map 
-COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementation(std::make_unique<SImplementation>()) {}
-
-// Destructor for the Open Street Map 
-COpenStreetMap::~COpenStreetMap() = default;
-
-// Returns the number of nodes in the map 
-std::size_t COpenStreetMap::NodeCount() const noexcept {
-    return DImplementation->DNodeMap.size();
-}
-
-// Returns the number of ways in the map 
-std::size_t COpenStreetMap::WayCount() const noexcept {
-    return DImplementation->DWays.size();
-}
-
-// Returns the SNode associated with index, returns nullptr if index is larger than or equal to NodeCount() 
-std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
-    if (index >= DImplementation->DNodeMap.size()) return nullptr;
-    auto it = DImplementation->DNodeMap.begin();
-    std::advance(it, index);
-    return it->second;
-}
-
-// Returns the SNode with the id of id, returns nullptr if doesn't exist 
-std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
-    auto it = DImplementation->DNodeMap.find(id);
-    return (it != DImplementation->DNodeMap.end()) ? it->second : nullptr;
-}
-
-// Returns the SWay associated with index, returns nullptr if index is larger than or equal to WayCount() 
-std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
-    return (index < DImplementation->DWays.size()) ? DImplementation->DWays[index] : nullptr;
-}
-
-// Returns the SWay with the id of id, returns nullptr if doesn't exist 
-std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
-    auto it = DImplementation->DWayMap.find(id);
-    return (it != DImplementation->DWayMap.end()) ? it->second : nullptr;
-}
 // // Street Map Node member functions 
 // // Returns the id of the SNode 
 // TNodeID SNodeImpl::ID() const noexcept {
