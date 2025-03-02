@@ -1,108 +1,125 @@
 #include "OpenStreetMap.h"
-#include <expat.h>
-#include <fstream>
+#include <utility>
 #include <iostream>
 
-// Constructor
-COpenStreetMap::COpenStreetMap() : DImplementation(std::make_unique<SImplementation>()) {}
+struct COpenStreetMap::SImplementation{
+    struct SNodeImpl : COpenStreetMap::SNode {
+        TNodeID NodeID;
+        TLocation NodeLocation;
+        std::map<std::string, std::string> Attributes;
+        
+        SNodeImpl(TNodeID id, TLocation location, std::map<std::string, std::string> attributes)
+            : NodeID(id), NodeLocation(location), Attributes(std::move(attributes)) {}
 
-void ParseNodeAttributes(const char **attrs, TNodeID &id, TLocation &location) {
-    for (int i = 0; attrs[i]; i += 2) {
-        std::string key = attrs[i];
-        std::string value = attrs[i + 1];
-
-        if (key == "id") {
-            id = std::stoll(value);
-        } else if (key == "lat") {
-            location.first = std::stod(value);
-        } else if (key == "lon") {
-            location.second = std::stod(value);
+        TNodeID ID() const noexcept override {
+            return NodeID;
         }
-    }
+
+        TLocation Location() const noexcept override {
+            return NodeLocation;
+        }
+
+        std::size_t AttributeCount() const noexcept override {
+            return Attributes.size();
+        }
+
+        std::string GetAttributeKey(std::size_t index) const noexcept override {
+            if (index >= Attributes.size()) return "";
+            auto it = Attributes.begin();
+            std::advance(it, index);
+            return it->first;
+        }
+
+        bool HasAttribute(const std::string &key) const noexcept override {
+            return Attributes.find(key) != Attributes.end();
+        }
+
+        std::string GetAttribute(const std::string &key) const noexcept override {
+            auto it = Attributes.find(key);
+            return it != Attributes.end() ? it->second : "";
+        }
+    };
+
+    struct SWayImpl : COpenStreetMap::SWay {
+        TWayID WayID;
+        std::vector<TNodeID> NodeIDs;
+        std::map<std::string, std::string> Attributes;
+
+        SWayImpl(TWayID id, std::vector<TNodeID> nodes, std::map<std::string, std::string> attributes)
+            : WayID(id), NodeIDs(std::move(nodes)), Attributes(std::move(attributes)) {}
+
+        TWayID ID() const noexcept override {
+            return WayID;
+        }
+
+        std::size_t NodeCount() const noexcept override {
+            return NodeIDs.size();
+        }
+
+        TNodeID GetNodeID(std::size_t index) const noexcept override {
+            if (index >= NodeIDs.size()) return InvalidNodeID;
+            return NodeIDs[index];
+        }
+
+        std::size_t AttributeCount() const noexcept override {
+            return Attributes.size();
+        }
+
+        std::string GetAttributeKey(std::size_t index) const noexcept override {
+            if (index >= Attributes.size()) return "";
+            auto it = Attributes.begin();
+            std::advance(it, index);
+            return it->first;
+        }
+
+        bool HasAttribute(const std::string &key) const noexcept override {
+            return Attributes.find(key) != Attributes.end();
+        }
+
+        std::string GetAttribute(const std::string &key) const noexcept override {
+            auto it = Attributes.find(key);
+            return it != Attributes.end() ? it->second : "";
+        }
+    };
+    
+    std::map<TNodeID, std::shared_ptr<SNodeImpl>> DNodeMap;
+    std::vector<std::shared_ptr<SWayImpl>> DWays;
+    std::map<TWayID, std::shared_ptr<SWayImpl>> DWayMap;
+};
+
+COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src)
+    : DImplementation(std::make_unique<SImplementation>()) {
+    std::cout << "OpenStreetMap initialized." << std::endl;
 }
 
-void StartElementHandler(void *userData, const char *name, const char **attrs) {
-    auto *osm = static_cast<COpenStreetMap::SImplementation *>(userData);
+COpenStreetMap::~COpenStreetMap() = default;
 
-    if (strcmp(name, "node") == 0) {
-        TNodeID id = 0;
-        TLocation location;
-        std::map<std::string, std::string> attributes;
-
-        ParseNodeAttributes(attrs, id, location);
-        osm->DNodeMap[id] = std::make_shared<COpenStreetMap::SImplementation::new_SNode>(id, location, attributes);
-
-    } else if (strcmp(name, "way") == 0) {
-        osm->CurrentWayID = 0;
-        osm->CurrentWayNodes.clear();
-        osm->CurrentWayAttributes.clear();
-
-        for (int i = 0; attrs[i]; i += 2) {
-            if (std::string(attrs[i]) == "id") {
-                osm->CurrentWayID = std::stoll(attrs[i + 1]);
-            }
-        }
-
-    } else if (strcmp(name, "nd") == 0 && osm->CurrentWayID) {
-        for (int i = 0; attrs[i]; i += 2) {
-            if (std::string(attrs[i]) == "ref") {
-                osm->CurrentWayNodes.push_back(std::stoll(attrs[i + 1]));
-            }
-        }
-
-    } else if (strcmp(name, "tag") == 0) {
-        std::string key, value;
-        for (int i = 0; attrs[i]; i += 2) {
-            if (std::string(attrs[i]) == "k") {
-                key = attrs[i + 1];
-            } else if (std::string(attrs[i]) == "v") {
-                value = attrs[i + 1];
-            }
-        }
-        if (osm->CurrentWayID) {
-            osm->CurrentWayAttributes[key] = value;
-        }
-    }
+std::size_t COpenStreetMap::NodeCount() const noexcept {
+    return DImplementation->DNodeMap.size();
 }
 
-void EndElementHandler(void *userData, const char *name) {
-    auto *osm = static_cast<COpenStreetMap::SImplementation *>(userData);
-
-    if (strcmp(name, "way") == 0 && osm->CurrentWayID) {
-        osm->DWays.push_back(std::make_shared<COpenStreetMap::SImplementation::new_SWay>(
-            osm->CurrentWayID, osm->CurrentWayNodes, osm->CurrentWayAttributes));
-
-        osm->DWayMap[osm->CurrentWayID] = osm->DWays.back();
-    }
+std::size_t COpenStreetMap::WayCount() const noexcept {
+    return DImplementation->DWays.size();
 }
 
-bool COpenStreetMap::LoadMapFromXML(const std::string &filename) {
-    XML_Parser parser = XML_ParserCreate(nullptr);
-    if (!parser) {
-        std::cerr << "Error: Failed to create XML parser." << std::endl;
-        return false;
-    }
+std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
+    if (index >= DImplementation->DNodeMap.size()) return nullptr;
+    auto it = DImplementation->DNodeMap.begin();
+    std::advance(it, index);
+    return it->second;
+}
 
-    XML_SetUserData(parser, DImplementation.get());
-    XML_SetElementHandler(parser, StartElementHandler, EndElementHandler);
+std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
+    auto it = DImplementation->DNodeMap.find(id);
+    return it != DImplementation->DNodeMap.end() ? it->second : nullptr;
+}
 
-    std::ifstream file(filename, std::ios::binary);
-    if (!file) {
-        std::cerr << "Error: Unable to open file '" << filename << "'." << std::endl;
-        XML_ParserFree(parser);
-        return false;
-    }
+std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
+    if (index >= DImplementation->DWays.size()) return nullptr;
+    return DImplementation->DWays[index];
+}
 
-    char buffer[4096];
-    while (file.read(buffer, sizeof(buffer)) || file.gcount() > 0) {
-        if (XML_Parse(parser, buffer, file.gcount(), file.eof()) == XML_STATUS_ERROR) {
-            std::cerr << "Error: XML parsing failed in file '" << filename 
-                      << "': " << XML_ErrorString(XML_GetErrorCode(parser)) << std::endl;
-            XML_ParserFree(parser);
-            return false;
-        }
-    }
-
-    XML_ParserFree(parser);
-    return true;
+std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
+    auto it = DImplementation->DWayMap.find(id);
+    return it != DImplementation->DWayMap.end() ? it->second : nullptr;
 }
