@@ -1,5 +1,5 @@
 #include "OpenStreetMap.h"
-#include "CXMLReader.h"
+#include "XMLReader.h"
 #include "XMLEntity.h"
 #include <string>
 #include <iostream>
