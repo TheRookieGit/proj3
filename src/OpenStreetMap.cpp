@@ -1,190 +1,108 @@
 #include "OpenStreetMap.h"
-#include <memory>
-#include <string>
-#include <vector>
-#include <map>
+#include <expat.h>
+#include <fstream>
+#include <iostream>
 
-struct COpenStreetMap::SImplementation {
-    struct new_SNode : COpenStreetMap::SNode {
-        TNodeID DID;
-        TLocation DLocation;
-        std::map<std::string, std::string> DAttributes; 
-        std::vector<std::shared_ptr<SWay>> DWays;              
-       
-        // Constructor to initialize the node with an ID, location, and attributes
-        new_SNode(TNodeID id, TLocation location, std::map<std::string, std::string> attributes)
-            : DID(id), DLocation(location), DAttributes(std::move(attributes)) {}
+// Constructor
+COpenStreetMap::COpenStreetMap() : DImplementation(std::make_unique<SImplementation>()) {}
 
-        TNodeID ID() const noexcept override {
-            return DID;
+void ParseNodeAttributes(const char **attrs, TNodeID &id, TLocation &location) {
+    for (int i = 0; attrs[i]; i += 2) {
+        std::string key = attrs[i];
+        std::string value = attrs[i + 1];
+
+        if (key == "id") {
+            id = std::stoll(value);
+        } else if (key == "lat") {
+            location.first = std::stod(value);
+        } else if (key == "lon") {
+            location.second = std::stod(value);
         }
+    }
+}
 
-        TLocation Location() const noexcept override {
-            return DLocation;
-        }
+void StartElementHandler(void *userData, const char *name, const char **attrs) {
+    auto *osm = static_cast<COpenStreetMap::SImplementation *>(userData);
 
-        std::size_t AttributeCount() const noexcept override {
-            return DAttributes.size();
-        }
+    if (strcmp(name, "node") == 0) {
+        TNodeID id = 0;
+        TLocation location;
+        std::map<std::string, std::string> attributes;
 
-        std::string GetAttributeKey(std::size_t index) const noexcept override {
-            if (index >= DAttributes.size()) {
-                return "";
+        ParseNodeAttributes(attrs, id, location);
+        osm->DNodeMap[id] = std::make_shared<COpenStreetMap::SImplementation::new_SNode>(id, location, attributes);
+
+    } else if (strcmp(name, "way") == 0) {
+        osm->CurrentWayID = 0;
+        osm->CurrentWayNodes.clear();
+        osm->CurrentWayAttributes.clear();
+
+        for (int i = 0; attrs[i]; i += 2) {
+            if (std::string(attrs[i]) == "id") {
+                osm->CurrentWayID = std::stoll(attrs[i + 1]);
             }
-            auto it = DAttributes.begin();
-            std::advance(it, index);
-            return it->first;
         }
 
-        bool HasAttribute(const std::string &key) const noexcept override {
-            return DAttributes.find(key) != DAttributes.end();
-        }
-
-        std::string GetAttribute(const std::string &key) const noexcept override {
-            auto it = DAttributes.find(key);
-            return (it != DAttributes.end()) ? it->second : "";
-        }
-    };
-
-    struct new_SWay : COpenStreetMap::SWay {
-        TWayID DID;
-        std::vector<TNodeID> DNodeIDs;
-        std::map<std::string, std::string> DAttributes;
-
-        // Constructor to initialize the way with an ID, nodes, and attributes
-        new_SWay(TWayID id, std::vector<TNodeID> nodes, std::map<std::string, std::string> attributes)
-            : DID(id), DNodeIDs(std::move(nodes)), DAttributes(std::move(attributes)) {}
-
-        TWayID ID() const noexcept override {
-            return DID;
-        }
-
-        std::size_t NodeCount() const noexcept override {
-            return DNodeIDs.size();
-        }
-
-        TNodeID GetNodeID(std::size_t index) const noexcept override {
-            return (index < DNodeIDs.size()) ? DNodeIDs[index] : InvalidNodeID;
-        }
-
-        std::size_t AttributeCount() const noexcept override {
-            return DAttributes.size();
-        }
-
-        std::string GetAttributeKey(std::size_t index) const noexcept override {
-            if (index >= DAttributes.size()) {
-                return "";
+    } else if (strcmp(name, "nd") == 0 && osm->CurrentWayID) {
+        for (int i = 0; attrs[i]; i += 2) {
+            if (std::string(attrs[i]) == "ref") {
+                osm->CurrentWayNodes.push_back(std::stoll(attrs[i + 1]));
             }
-            auto it = DAttributes.begin();
-            std::advance(it, index);
-            return it->first;
         }
 
-        bool HasAttribute(const std::string &key) const noexcept override {
-            return DAttributes.find(key) != DAttributes.end();
+    } else if (strcmp(name, "tag") == 0) {
+        std::string key, value;
+        for (int i = 0; attrs[i]; i += 2) {
+            if (std::string(attrs[i]) == "k") {
+                key = attrs[i + 1];
+            } else if (std::string(attrs[i]) == "v") {
+                value = attrs[i + 1];
+            }
         }
-
-        std::string GetAttribute(const std::string &key) const noexcept override {
-            auto it = DAttributes.find(key);
-            return (it != DAttributes.end()) ? it->second : "";
+        if (osm->CurrentWayID) {
+            osm->CurrentWayAttributes[key] = value;
         }
-    };
-};
-
-// Returns the number of ways in the map 
-std::size_t COpenStreetMap::WayCount() const noexcept {
-    return DImplementation->DWays.size();
+    }
 }
 
-// returns the SNode associated with index returns nullptr if index is out of range
-std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
-    return (index < DImplementation->DNodeIDs.size()) ? DImplementation->DNodeIDs[index] : nullptr;
+void EndElementHandler(void *userData, const char *name) {
+    auto *osm = static_cast<COpenStreetMap::SImplementation *>(userData);
+
+    if (strcmp(name, "way") == 0 && osm->CurrentWayID) {
+        osm->DWays.push_back(std::make_shared<COpenStreetMap::SImplementation::new_SWay>(
+            osm->CurrentWayID, osm->CurrentWayNodes, osm->CurrentWayAttributes));
+
+        osm->DWayMap[osm->CurrentWayID] = osm->DWays.back();
+    }
 }
 
-// returns the SNode with the given id returns nullptr if it doesn't exist 
-std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
-    auto it = DImplementation->DNodeMap.find(id);
-    return (it != DImplementation->DNodeMap.end()) ? it->second : nullptr;
+bool COpenStreetMap::LoadMapFromXML(const std::string &filename) {
+    XML_Parser parser = XML_ParserCreate(nullptr);
+    if (!parser) {
+        std::cerr << "Error: Failed to create XML parser." << std::endl;
+        return false;
+    }
+
+    XML_SetUserData(parser, DImplementation.get());
+    XML_SetElementHandler(parser, StartElementHandler, EndElementHandler);
+
+    std::ifstream file(filename, std::ios::binary);
+    if (!file) {
+        std::cerr << "Error: Unable to open file '" << filename << "'." << std::endl;
+        XML_ParserFree(parser);
+        return false;
+    }
+
+    char buffer[4096];
+    while (file.read(buffer, sizeof(buffer)) || file.gcount() > 0) {
+        if (XML_Parse(parser, buffer, file.gcount(), file.eof()) == XML_STATUS_ERROR) {
+            std::cerr << "Error: XML parsing failed in file '" << filename 
+                      << "': " << XML_ErrorString(XML_GetErrorCode(parser)) << std::endl;
+            XML_ParserFree(parser);
+            return false;
+        }
+    }
+
+    XML_ParserFree(parser);
+    return true;
 }
-
-// returns the SWay associated with index returns nullptr if index is out of range
-std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
-    return (index < DImplementation->DWays.size()) ? DImplementation->DWays[index] : nullptr;
-}
-
-// returns the SWay with the given id returns nullptr if it doesn't exist
-std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
-    auto it = DImplementation->DWayMap.find(id);
-    return (it != DImplementation->DWayMap.end()) ? it->second : nullptr;
-}
-
-
-// // Street Map Node member functions 
-// // Returns the id of the SNode 
-// TNodeID SNodeImpl::ID() const noexcept {
-//     return TNodeID();
-// }
-
-// // Returns the lat/lon location of the SNode 
-// TLocation SNodeImpl::Location() const noexcept {
-//     return TLocation();
-// }
-
-// // Returns the number of attributes attached to the SNode 
-// std::size_t SNodeImpl::AttributeCount() const noexcept {
-//     return 0;
-// }
-
-// // Returns the key of the attribute at index, returns empty string if index is greater than or equal to AttributeCount() 
-// std::string SNodeImpl::GetAttributeKey(std::size_t index) const noexcept {
-//     return "";
-// }
-
-// // Returns if the attribute is attached to the SNode 
-// bool SNodeImpl::HasAttribute(const std::string &key) const noexcept {
-//     return false;
-// }
-
-// // Returns the value of the attribute specified by key, returns empty string if key hasn't been attached to SNode 
-// std::string SNodeImpl::GetAttribute(const std::string &key) const noexcept {
-//     return "";
-// }
-
-
-
-
-// // Street Map Way 
-// // Returns the id of the SWay 
-// TWayID SWayImpl::ID() const noexcept {
-//     return TWayID();
-// }
-
-// // Returns the number of nodes in the way 
-// std::size_t SWayImpl::NodeCount() const noexcept {
-//     return 0;
-// }
-
-// // Returns the node id of the node at index, returns InvalidNodeID if index is greater than or equal to NodeCount() 
-// TNodeID SWayImpl::GetNodeID(std::size_t index) const noexcept {
-//     return TNodeID();
-// }
-
-// // Returns the number of attributes attached to the SWay 
-// std::size_t SWayImpl::AttributeCount() const noexcept {
-//     return 0;
-// }
-
-// // Returns the key of the attribute at index, returns empty string if index is greater than or equal to AttributeCount() 
-// std::string SWayImpl::GetAttributeKey(std::size_t index) const noexcept {
-//     return "";
-// }
-
-// // Returns if the attribute is attached to the SWay 
-// bool SWayImpl::HasAttribute(const std::string &key) const noexcept {
-//     return false;
-// }
-
-// // Returns the value of the attribute specified by key, returns empty string if key hasn't been attached to SWay 
-// std::string SWayImpl::GetAttribute(const std::string &key) const noexcept {
-//     return "";
-// }
