@@ -99,7 +99,13 @@ COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementatio
             if (entity.DNameData == "node") {
                 TNodeID nodeID = std::stoll(entity.DAttributes["id"]);
                 TLocation location = {std::stod(entity.DAttributes["lat"]), std::stod(entity.DAttributes["lon"])};
-                DImplementation->DNodeMap[nodeID] = std::make_shared<new_SNode>(nodeID, location, entity.DAttributes);
+                std::map<std::string, std::string> attributes;
+                while (src->ReadEntity(entity) && entity.DType != SXMLEntity::EType::EndElement) {
+                    if (entity.DNameData == "tag") {
+                        attributes[entity.DAttributes["k"]] = entity.DAttributes["v"];
+                    }
+                }
+                DImplementation->DNodeMap[nodeID] = std::make_shared<new_SNode>(nodeID, location, attributes);
             } else if (entity.DNameData == "way") {
                 TWayID wayID = std::stoll(entity.DAttributes["id"]);
                 std::vector<TNodeID> nodes;
@@ -107,6 +113,8 @@ COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementatio
                 while (src->ReadEntity(entity) && entity.DType != SXMLEntity::EType::EndElement) {
                     if (entity.DNameData == "nd") {
                         nodes.push_back(std::stoll(entity.DAttributes["ref"]));
+                    } else if (entity.DNameData == "tag") {
+                        attributes[entity.DAttributes["k"]] = entity.DAttributes["v"];
                     }
                 }
                 DImplementation->DWayMap[wayID] = std::make_shared<new_SWay>(wayID, nodes, attributes);
