@@ -50,10 +50,10 @@ struct COpenStreetMap::SImplementation {
     struct new_SWay : COpenStreetMap::SWay {
         TWayID WayID;
         std::vector<TNodeID> NodeIDs;
-        std::map<std::string, std::string> Attributes;
+        std::map<std::string, std::string> xAttributes;
 
         new_SWay(TWayID id, std::vector<TNodeID> nodes, std::map<std::string, std::string> attributes)
-            : WayID(id), NodeIDs(std::move(nodes)), Attributes(std::move(attributes)) {}
+            : WayID(id), NodeIDs(std::move(nodes)), xAttributes(std::move(attributes)) {}
 
         TWayID ID() const noexcept override {
             return WayID;
@@ -69,23 +69,23 @@ struct COpenStreetMap::SImplementation {
         }
 
         std::size_t AttributeCount() const noexcept override {
-            return Attributes.size();
+            return xAttributes.size();
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override {
-            if (index >= Attributes.size()) return "";
-            auto it = Attributes.begin();
+            if (index >= xAttributes.size()) return "";
+            auto it = xAttributes.begin();
             std::advance(it, index);
             return it->first;
         }
 
         bool HasAttribute(const std::string &key) const noexcept override {
-            return Attributes.find(key) != Attributes.end();
+            return xAttributes.find(key) != xAttributes.end();
         }
 
         std::string GetAttribute(const std::string &key) const noexcept override {
-            auto it = Attributes.find(key);
-            return it != Attributes.end() ? it->second : "";
+            auto it = xAttributes.find(key);
+            return it != xAttributes.end() ? it->second : "";
         }
     };
 
@@ -131,45 +131,45 @@ std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const n
     return it != DImplementation->DWayMap.end() ? it->second : nullptr;
 }
 
-int main() {
-    // Load OpenStreetMap data using XML Reader
-    //* added on 3/1
+// int main() {
+//     // Load OpenStreetMap data using XML Reader
+//     //* added on 3/1
 
-    std::shared_ptr<CDataSource> new_datasource = std::make_shared<CStringDataSource>("map.osm");
-    std::shared_ptr<CXMLReader> reader = std::make_shared<CXMLReader>(new_datasource);
+//     std::shared_ptr<CDataSource> new_datasource = std::make_shared<CStringDataSource>("map.osm");
+//     std::shared_ptr<CXMLReader> reader = std::make_shared<CXMLReader>(new_datasource);
     
-    //std::shared_ptr<CXMLReader> reader = std::make_shared<CXMLReader>("map.osm");
-    COpenStreetMap osm(reader);
+//     //std::shared_ptr<CXMLReader> reader = std::make_shared<CXMLReader>("map.osm");
+//     COpenStreetMap osm(reader);
     
-    std::cout << "OpenStreetMap Data Loaded." << std::endl;
+//     std::cout << "OpenStreetMap Data Loaded." << std::endl;
     
-    // Display node and way count
-    std::cout << "Total Nodes: " << osm.NodeCount() << std::endl;
-    std::cout << "Total Ways: " << osm.WayCount() << std::endl;
+//     // Display node and way count
+//     std::cout << "Total Nodes: " << osm.NodeCount() << std::endl;
+//     std::cout << "Total Ways: " << osm.WayCount() << std::endl;
 
-    // Example: Fetch and display all nodes
-    for (std::size_t i = 0; i < osm.NodeCount(); ++i) {
-        auto node = osm.NodeByIndex(i);
-        if (node) {
-            std::cout << "Node ID: " << node->ID() << " Location: (" 
-                    //   << node->Location().Latitude << ", " 
-                    //   << node->Location().Longitude << ")" << std::endl;
-                    << node->Location().first << ", " 
-                      << node->Location().second << ")" << std::endl;
-        }
-    }
+//     // Example: Fetch and display all nodes
+//     for (std::size_t i = 0; i < osm.NodeCount(); ++i) {
+//         auto node = osm.NodeByIndex(i);
+//         if (node) {
+//             std::cout << "Node ID: " << node->ID() << " Location: (" 
+//                     //   << node->Location().Latitude << ", " 
+//                     //   << node->Location().Longitude << ")" << std::endl;
+//                     << node->Location().first << ", " 
+//                       << node->Location().second << ")" << std::endl;
+//         }
+//     }
 
-    // Example: Fetch and display all ways
-    for (std::size_t i = 0; i < osm.WayCount(); ++i) {
-        auto way = osm.WayByIndex(i);
-        if (way) {
-            std::cout << "Way ID: " << way->ID() << " contains " 
-                      << way->NodeCount() << " nodes." << std::endl;
-        }
-    }
+//     // Example: Fetch and display all ways
+//     for (std::size_t i = 0; i < osm.WayCount(); ++i) {
+//         auto way = osm.WayByIndex(i);
+//         if (way) {
+//             std::cout << "Way ID: " << way->ID() << " contains " 
+//                       << way->NodeCount() << " nodes." << std::endl;
+//         }
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 //! ***** temp comment below:
 
