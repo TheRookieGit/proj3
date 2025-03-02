@@ -92,6 +92,11 @@ struct COpenStreetMap::SImplementation {
     std::map<TNodeID, std::shared_ptr<new_SNode>> DNodeMap;
     std::vector<std::shared_ptr<new_SWay>> DWays;
     std::map<TWayID, std::shared_ptr<new_SWay>> DWayMap;
+
+
+    SImplementation(std::shared_ptr<CXMLReader> src){
+        
+    }
 };
 
 COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src)
