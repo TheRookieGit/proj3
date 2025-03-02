@@ -20,7 +20,7 @@ struct COpenStreetMap::SImplementation{
         }
 
         std::size_t AttributeCount() const noexcept override {
-            return Attributes.size();
+            return DAttributes.size();
         }
 
         std::string GetAttributeKey(std::size_t index) const noexcept override {
