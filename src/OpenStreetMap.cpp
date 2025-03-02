@@ -171,48 +171,50 @@ int main() {
     return 0;
 }
 
+
+//! 
 //! ***** temp comment below:
 
-// // Constructor for the Open Street Map 
-// COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementation(std::make_unique<SImplementation>()) {}
+// Constructor for the Open Street Map 
+COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src) : DImplementation(std::make_unique<SImplementation>()) {}
 
-// // Destructor for the Open Street Map 
-// COpenStreetMap::~COpenStreetMap() = default;
+// Destructor for the Open Street Map 
+COpenStreetMap::~COpenStreetMap() = default;
 
-// // Returns the number of nodes in the map 
-// std::size_t COpenStreetMap::NodeCount() const noexcept {
-//     return DImplementation->DNodeMap.size();
-// }
+// Returns the number of nodes in the map 
+std::size_t COpenStreetMap::NodeCount() const noexcept {
+    return DImplementation->DNodeMap.size();
+}
 
-// // Returns the number of ways in the map 
-// std::size_t COpenStreetMap::WayCount() const noexcept {
-//     return DImplementation->DWays.size();
-// }
+// Returns the number of ways in the map 
+std::size_t COpenStreetMap::WayCount() const noexcept {
+    return DImplementation->DWays.size();
+}
 
-// // Returns the SNode associated with index, returns nullptr if index is larger than or equal to NodeCount() 
-// std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
-//     if (index >= DImplementation->DNodeMap.size()) return nullptr;
-//     auto it = DImplementation->DNodeMap.begin();
-//     std::advance(it, index);
-//     return it->second;
-// }
+// Returns the SNode associated with index, returns nullptr if index is larger than or equal to NodeCount() 
+std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByIndex(std::size_t index) const noexcept {
+    if (index >= DImplementation->DNodeMap.size()) return nullptr;
+    auto it = DImplementation->DNodeMap.begin();
+    std::advance(it, index);
+    return it->second;
+}
 
-// // Returns the SNode with the id of id, returns nullptr if doesn't exist 
-// std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
-//     auto it = DImplementation->DNodeMap.find(id);
-//     return (it != DImplementation->DNodeMap.end()) ? it->second : nullptr;
-// }
+// Returns the SNode with the id of id, returns nullptr if doesn't exist 
+std::shared_ptr<COpenStreetMap::SNode> COpenStreetMap::NodeByID(TNodeID id) const noexcept {
+    auto it = DImplementation->DNodeMap.find(id);
+    return (it != DImplementation->DNodeMap.end()) ? it->second : nullptr;
+}
 
-// // Returns the SWay associated with index, returns nullptr if index is larger than or equal to WayCount() 
-// std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
-//     return (index < DImplementation->DWays.size()) ? DImplementation->DWays[index] : nullptr;
-// }
+// Returns the SWay associated with index, returns nullptr if index is larger than or equal to WayCount() 
+std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByIndex(std::size_t index) const noexcept {
+    return (index < DImplementation->DWays.size()) ? DImplementation->DWays[index] : nullptr;
+}
 
-// // Returns the SWay with the id of id, returns nullptr if doesn't exist 
-// std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
-//     auto it = DImplementation->DWayMap.find(id);
-//     return (it != DImplementation->DWayMap.end()) ? it->second : nullptr;
-// }
+// Returns the SWay with the id of id, returns nullptr if doesn't exist 
+std::shared_ptr<COpenStreetMap::SWay> COpenStreetMap::WayByID(TWayID id) const noexcept {
+    auto it = DImplementation->DWayMap.find(id);
+    return (it != DImplementation->DWayMap.end()) ? it->second : nullptr;
+}
 
 
 //! ***** temp comment
