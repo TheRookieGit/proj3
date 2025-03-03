@@ -104,18 +104,28 @@ struct COpenStreetMap::SImplementation {
 
             if(current_entity.DNameData == "node"){
 
+
+                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+
+                }
             }
 
             else if(current_entity.DNameData == "way"){
-
+                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    
+                }
             }
 
             else if(current_entity.DNameData == "nd"){
-
+                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    
+                }
             }
 
             else if(current_entity.DNameData == "tag"){
-                
+                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    
+                }
             }
         }
     }
