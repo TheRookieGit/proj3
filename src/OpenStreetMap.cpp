@@ -107,6 +107,25 @@ struct COpenStreetMap::SImplementation {
 
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
 
+                    if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat" && current_entity.AttributeExists("lon")){
+                        
+                        TNodeID node_id = std::stoull(current_entity.AttributeValue("id"));
+
+                        TLocation node_location
+
+
+                        if(current_entity.DType == SXMLEntity::EType::CompleteElement){
+                            DNodeMap[NodeByID] = current_node;
+
+                            current_node = nullptr;
+                        }
+                    }
+
+                    else if(current_entity.DType == SXMLEntity::EType::EndElement && current_node){
+                        DNodeMap[NodeByID] = current_node;
+
+                            current_node = nullptr;
+                    }
                 }
             }
 
@@ -116,15 +135,35 @@ struct COpenStreetMap::SImplementation {
                 }
             }
 
-            else if(current_entity.DNameData == "nd"){
+            else if(current_entity.DNameData == "nd" && current_way){
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
-                    
+                    if(current_entity.AttributeExists("ref"){
+                        TNodeID convert_nodeid = std::stoull(current_entity.AttributeValue("ref")){
+                            current_way -> NodeIDs.push_back(convert_nodeid);
+                        }
+                        
+                    }
                 }
             }
 
             else if(current_entity.DNameData == "tag"){
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
-                    
+                    if(current_entity.AttributeExists("k") && current_entity.AttributeExists("v")){
+                        std::string k_key = current_entity.AttributeValue("k");
+                        std::string v_value = current_entity.AttributeValue("v");
+
+                        if(current_node){
+                            current_node->Attributes[k_key] = v_value;
+
+                            
+
+                        }
+                        else if(current_way){
+                            current_way->xAttributes[k_key] = v_value;
+                        }
+
+
+                    }
                 }
             }
         }
