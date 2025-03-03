@@ -139,8 +139,41 @@ struct COpenStreetMap::SImplementation {
 
             else if(current_entity.DNameData == "way"){
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
-                    
+
+                    // if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat" && current_entity.AttributeExists("lon")){
+                    if(current_entity.AttributeExists("id")){    
+                        
+                        //TNodeID node_id = std::stoull(current_entity.AttributeValue("id"));
+                        TNodeID way_id = std::stoull(current_entity.AttributeValue("id"));
+
+
+                        current_way = std::make_shared<new_SWay>(wayID, {}, {});
+
+                        if(current_entity.DType == SXMLEntity::EType::CompleteElement){
+                            // DNodeMap[NodeByID] = current_node;
+
+                            // current_node = nullptr;
+
+                            DWays.push_back(current_way);
+                            DWayMap[way_id] = current_way;
+
+                            current_way = nullptr;
+
+                        }
+                    }
+
+                    else if(current_entity.DType == SXMLEntity::EType::EndElement && current_way){
+                        // DNodeMap[NodeByID] = current_node;
+
+                        //     current_node = nullptr;
+
+                        DWays.push_back(current_way);
+                            DWayMap[way_id] = current_way;
+
+                            current_way = nullptr;
+                    }
                 }
+
             }
 
             else if(current_entity.DNameData == "nd" && current_way){
