@@ -9,6 +9,8 @@
 #include <DataSource.h>
 #include <StringDataSource.h>
 
+#include <sstream> //for std::stringstream
+
 struct COpenStreetMap::SImplementation {
     struct new_SNode : COpenStreetMap::SNode {
         TNodeID NodeID;
@@ -107,7 +109,7 @@ struct COpenStreetMap::SImplementation {
 
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
 
-                    if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat" && current_entity.AttributeExists("lon")){
+                    if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat") && current_entity.AttributeExists("lon")){
                         
                         TNodeID node_id = std::stoull(current_entity.AttributeValue("id"));
 
@@ -119,18 +121,21 @@ struct COpenStreetMap::SImplementation {
                         read_lat >> node_location.first;
                         read_lon >> node_location.second;
 
+                        //std::vector<TNodeID> empty_node;
+                        std::map<std::string, std::string> empty_attribute;
 
-                        current_node = std::make_shared<new_SNode>(node_id, node_location, {});
+                        //current_node = std::make_shared<new_SNode>(node_id, node_location, {});
+                        current_node = std::make_shared<new_SNode>(node_id, node_location, empty_attribute);
 
                         if(current_entity.DType == SXMLEntity::EType::CompleteElement){
-                            DNodeMap[NodeByID] = current_node;
+                            DNodeMap[node_id] = current_node;
 
                             current_node = nullptr;
                         }
                     }
 
                     else if(current_entity.DType == SXMLEntity::EType::EndElement && current_node){
-                        DNodeMap[NodeByID] = current_node;
+                        DNodeMap[current_node->ID()] = current_node;
 
                             current_node = nullptr;
                     }
@@ -147,7 +152,12 @@ struct COpenStreetMap::SImplementation {
                         TNodeID way_id = std::stoull(current_entity.AttributeValue("id"));
 
 
-                        current_way = std::make_shared<new_SWay>(wayID, {}, {});
+                        //current_way = std::make_shared<new_SWay>(way_id, {}, {});
+
+                        std::vector<TNodeID> empty_node;
+                        std::map<std::string, std::string> empty_attribute;
+
+                        current_way = std::make_shared<new_SWay>(way_id, empty_node, empty_attribute);
 
                         if(current_entity.DType == SXMLEntity::EType::CompleteElement){
                             // DNodeMap[NodeByID] = current_node;
@@ -168,7 +178,8 @@ struct COpenStreetMap::SImplementation {
                         //     current_node = nullptr;
 
                         DWays.push_back(current_way);
-                            DWayMap[way_id] = current_way;
+                            //DWayMap[way_id] = current_way;
+                            DWayMap[current_way->ID()] = current_way;
 
                             current_way = nullptr;
                     }
@@ -178,10 +189,10 @@ struct COpenStreetMap::SImplementation {
 
             else if(current_entity.DNameData == "nd" && current_way){
                 if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
-                    if(current_entity.AttributeExists("ref"){
-                        TNodeID convert_nodeid = std::stoull(current_entity.AttributeValue("ref")){
+                    if(current_entity.AttributeExists("ref")){
+                        TNodeID convert_nodeid = std::stoull(current_entity.AttributeValue("ref"));
                             current_way -> NodeIDs.push_back(convert_nodeid);
-                        }
+                        
                         
                     }
                 }
@@ -212,7 +223,8 @@ struct COpenStreetMap::SImplementation {
 };
 
 COpenStreetMap::COpenStreetMap(std::shared_ptr<CXMLReader> src)
-    : DImplementation(std::make_unique<SImplementation>()) {
+    // : DImplementation(std::make_unique<SImplementation>()) {
+        : DImplementation(std::make_unique<SImplementation>(src)) {
     std::cout << "OpenStreetMap initialized." << std::endl;
 }
 
