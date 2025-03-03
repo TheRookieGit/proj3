@@ -111,8 +111,16 @@ struct COpenStreetMap::SImplementation {
                         
                         TNodeID node_id = std::stoull(current_entity.AttributeValue("id"));
 
-                        TLocation node_location
+                        TLocation node_location;
 
+                        std::stringstream read_lat(current_entity.AttributeValue("lat"));
+                        std::stringstream read_lon(current_entity.AttributeValue("lon"));
+
+                        read_lat >> node_location.first;
+                        read_lon >> node_location.second;
+
+
+                        current_node = std::make_shared<new_SNode>(node_id, node_location, {});
 
                         if(current_entity.DType == SXMLEntity::EType::CompleteElement){
                             DNodeMap[NodeByID] = current_node;
