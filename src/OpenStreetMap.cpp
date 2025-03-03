@@ -107,7 +107,8 @@ struct COpenStreetMap::SImplementation {
             if(current_entity.DNameData == "node"){
 
 
-                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                //if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::CompleteElement){
 
                     if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat") && current_entity.AttributeExists("lon")){
                         
@@ -133,23 +134,26 @@ struct COpenStreetMap::SImplementation {
                             current_node = nullptr;
                         }
                     }
-
+                    
+                }
                     else if(current_entity.DType == SXMLEntity::EType::EndElement && current_node){
                         DNodeMap[current_node->ID()] = current_node;
 
                             current_node = nullptr;
                     }
-                }
+                
             }
 
             else if(current_entity.DNameData == "way"){
-                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                //if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::CompleteElement){
 
                     // if(current_entity.AttributeExists("id") && current_entity.AttributeExists("lat" && current_entity.AttributeExists("lon")){
                     if(current_entity.AttributeExists("id")){    
                         
                         //TNodeID node_id = std::stoull(current_entity.AttributeValue("id"));
-                        TNodeID way_id = std::stoull(current_entity.AttributeValue("id"));
+                        //TNodeID way_id = std::stoull(current_entity.AttributeValue("id"));
+                        TWayID way_id = std::stoull(current_entity.AttributeValue("id"));
 
 
                         //current_way = std::make_shared<new_SWay>(way_id, {}, {});
@@ -171,6 +175,7 @@ struct COpenStreetMap::SImplementation {
 
                         }
                     }
+                }
 
                     else if(current_entity.DType == SXMLEntity::EType::EndElement && current_way){
                         // DNodeMap[NodeByID] = current_node;
@@ -183,12 +188,13 @@ struct COpenStreetMap::SImplementation {
 
                             current_way = nullptr;
                     }
-                }
+                
 
             }
 
             else if(current_entity.DNameData == "nd" && current_way){
-                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                //if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::CompleteElement){
                     if(current_entity.AttributeExists("ref")){
                         TNodeID convert_nodeid = std::stoull(current_entity.AttributeValue("ref"));
                             current_way -> NodeIDs.push_back(convert_nodeid);
@@ -199,7 +205,8 @@ struct COpenStreetMap::SImplementation {
             }
 
             else if(current_entity.DNameData == "tag"){
-                if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                //if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::EndElement){
+                    if(current_entity.DType == SXMLEntity::EType::StartElement || current_entity.DType == SXMLEntity::EType::CompleteElement){
                     if(current_entity.AttributeExists("k") && current_entity.AttributeExists("v")){
                         std::string k_key = current_entity.AttributeValue("k");
                         std::string v_value = current_entity.AttributeValue("v");
