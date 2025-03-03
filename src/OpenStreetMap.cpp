@@ -95,7 +95,29 @@ struct COpenStreetMap::SImplementation {
 
 
     SImplementation(std::shared_ptr<CXMLReader> src){
-        
+        SXMLEntity current_entity;
+        std::shared_ptr<new_SNode> current_node = nullptr;
+        std::shared_ptr<new_SWay> current_way = nullptr;
+
+
+        while(src->ReadEntity(current_entity)){
+
+            if(current_entity.DNameData == "node"){
+
+            }
+
+            else if(current_entity.DNameData == "way"){
+
+            }
+
+            else if(current_entity.DNameData == "nd"){
+
+            }
+
+            else if(current_entity.DNameData == "tag"){
+                
+            }
+        }
     }
 };
 
